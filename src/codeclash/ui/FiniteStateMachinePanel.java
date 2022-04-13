@@ -27,9 +27,9 @@ public class FiniteStateMachinePanel extends JPanel {
 	BufferedImage creatureImage, creatureChewImage, creatureDeadImage, grass;
 	Random rnd = new Random();
 	int numberOfFood = 25;
-	int numberOfCreatures = 4;
-	String[] names = new String[] {"Hannah", "Bob", "Anders", "Elsa"};
-	Color[] colors = new Color[] {Color.red, Color.cyan, new Color(70, 180, 20), new Color(70,200,200), new Color(190, 130, 230)};
+	int numberOfCreatures = 6;
+	String[] names = new String[] {"Hannah", "Bob", "Anders", "Elsa", "Jake", "Maria"};
+	Color[] colors = new Color[] {Color.red, Color.cyan, new Color(70, 180, 20),  new Color(170, 130, 220), Color.yellow,new Color(255, 150,0)};
 	
 	public static void main(String[] args) {
 		

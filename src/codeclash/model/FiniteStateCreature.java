@@ -214,7 +214,7 @@ public class FiniteStateCreature  extends Creature {
 		g.setColor(Color.black);
 		Rectangle nameRectangle = new Rectangle((int)getPosition().x - 45, (int)getPosition().y-40, 90, 20);
 		Rectangle stateRectangle =	new Rectangle((int)getPosition().x - 45, (int)getPosition().y+40, 90, 20);
-		String nameString = "\"" + getName().toUpperCase()  + "\"";
+		String nameString = getName().toUpperCase()  ;
 		g.setFont(FiniteStateMachinePanel.BIGFONT);
 
 		FiniteStateMachinePanel.drawCenteredString(g, nameString, nameRectangle, FiniteStateMachinePanel.BIGFONT);
@@ -285,20 +285,23 @@ public class FiniteStateCreature  extends Creature {
 	        // convert to red image
 	        for (int y = 0; y < height; y++) {
 	            for (int x = 0; x < width; x++) {
+	            	
 	                int p = image.getRGB(x, y);
-	                if(p != 0) {
-	                	int a = (p >> 24) & 0xff;
-	                	int r = (p >> 16) & color.getRed();
-	                	int g = (p >> 8) & color.getGreen();
-	                	int b =  p & color.getBlue();
-	                	
+	                //if((p & 0x00ffffff) != 0) {
+	                	int a = p >> 24 & 0xff ;
+	                	int r = p  >> 16 & 0xff ;
+	                	int g = p >> 8 & 0xff ;
+	                	int b =  p & 0xff;
+	                	if((r + g + b)/3 > 25) {
+	                		
+	                		p = (a << 24) | color.getRed() << 16 | color.getGreen()  << 8| color.getBlue();
+	                	}
 	                	// set new RGB keeping the r
 	                	// value same as in original image
 	                	// and setting g and b as 0.
-	                	p = (a << 24) | (r << 16) | (g << 8) | b;
 	                	
 	                	image.setRGB(x, y, p);
-	                }
+	                //}
 	                }
 	        }
 	        return image;
