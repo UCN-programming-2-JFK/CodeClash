@@ -1,6 +1,7 @@
 package codeclash.ui;
 
 import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Random;
@@ -17,35 +18,32 @@ public class FiniteStateMachinePanel extends JPanel {
 	
 	static int windowWidth = 1200, windowHeight = 800;
 	public static final Font FONT = new Font("Courier New", Font.BOLD, 16);				//font for writing
-	public static final Font BIGFONT = new Font("Courier New", Font.BOLD, 64);				//font for writing
+	public static final Font BIGFONT = new Font("Courier New", Font.BOLD, 24);				//font for writing
+	public static final Font TITLEFONT = new Font("Courier New", Font.BOLD, 64);				//font for writing
 	FiniteStateCreature creature;
 	long lastUpdate;							//the last time an update was performed. Used to calculate time since last update, to smooth animations
 	ArrayList<Food> food = new ArrayList<>();		//the list to hold all positions of food
-	Image creatureImage, creatureChewImage, creatureDeadImage;
+	BufferedImage creatureImage, creatureChewImage, creatureDeadImage, grass;
 	Random rnd = new Random();
 	int numberOfFood = 25;
 	
 	public static void main(String[] args) {
 		
 		FiniteStateMachinePanel examplePanel = new FiniteStateMachinePanel();//create our panel
-		
+		windowWidth = (int)Toolkit.getDefaultToolkit().getScreenSize().getWidth();
+		windowHeight = (int)Toolkit.getDefaultToolkit().getScreenSize().getHeight();
 		JFrame frame = new JFrame("Finite State Machine sample");			//create a Frame (window)
-		frame.setResizable(false); 									// lock its size
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); 		// set the X button click to close the window
-		frame.setSize(windowWidth, windowHeight); 					// set the size
 		frame.getContentPane().add(examplePanel); 					// add our  panel
-		frame.setVisible(true); 									// show the window>>
-		
 		examplePanel.setPreferredSize( new Dimension(windowWidth, windowHeight));
-		examplePanel.setFocusable(true);
-		examplePanel.setSize(windowWidth, windowHeight);
 		frame.pack();
-		examplePanel.grabFocus();									// !Important! - for the KeyListener to get key presses	
+		examplePanel.createCreature();
+		frame.setVisible(true); 									// show the window>>
 		examplePanel.runGameLoop();
 	}
 	
 	public FiniteStateMachinePanel() {
-		createCreature();
+		
 	}
 
 	private void createCreature() {
@@ -53,11 +51,13 @@ public class FiniteStateMachinePanel extends JPanel {
 		creatureChewImage = loadImage("/graphics/finitestatecreature/finitestatecreature_chewimage.png");
 		creatureDeadImage = loadImage("/graphics/finitestatecreature/finitestatecreature_deadimage.png");
 		creature = new FiniteStateCreature(new Point.Float(windowWidth/2, windowHeight/2), new Point.Float(), creatureImage, creatureChewImage, creatureDeadImage, food, FiniteStateCreature.CreatureState.FORAGING, new Dimension(windowWidth, windowHeight));
+		grass = loadImage("/graphics/grass2.png");
+		creature.setName("George");
 	}
 
 	private void addFoodAtRandomPositions() {
 		for (int i = 0; i < numberOfFood; i++) {	
-			food.add(new Food(rnd.nextInt(windowWidth), rnd.nextInt(windowHeight)));
+			food.add(new Food(rnd.nextInt(getWidth()), rnd.nextInt(getHeight())));
 		}
 	}
 
@@ -69,19 +69,30 @@ public class FiniteStateMachinePanel extends JPanel {
 
 	private void drawFood(Graphics g) {
 		int size = 10;
-		g.setColor(Color.green);
+		
 		for (int i = 0; i < food.size(); i++) {
 			float pctFoodLeft = food.get(i).getRemainingFood() / Food.MAX_REMAINING_FOOD;
 			int height = (int)(size * pctFoodLeft);
-			g.fillRect((int) food.get(i).x - size / 2, (int) food.get(i).y - size/ 2 - height, size, height);
+			int halfsize = size/2;
+			int left = food.get(i).x - halfsize;
+			int top = food.get(i).y - halfsize - height;
+			g.setColor(Color.white);
+			g.fillRect (left,top , size, height);
+			g.setColor(Color.black);
+			g.drawRect((int) left,top , size, height);
+			g.drawRect(left-1,top-1, size+2, height+2);
 		}
 	}
 
 	private void drawBackground(Graphics g) {
-		Color background = new Color(153, 74, 0);
-		g.setColor(background);
-		g.fillRect(0,0,getWidth(), getHeight());
-
+		int tileSize = 64;
+		for(int x = 0; x < getWidth()/tileSize+1; x++) {
+			for(int y = 0; y < getHeight()/tileSize+1; y++) {
+				int imageIndex = (x+y)%2;
+				g.drawImage(grass, x*tileSize, y* tileSize, (x+1)*tileSize, (y+1)* tileSize, imageIndex*tileSize, 0, (imageIndex+1)*tileSize, 64, null);
+			}	
+		}
+		
 	}
 
 	//runs the game loop forever
@@ -114,14 +125,51 @@ public class FiniteStateMachinePanel extends JPanel {
 		}
 	}
 			
-	private Image loadImage(String imagePathOrUrl)
+	private BufferedImage loadImage(String imagePathOrUrl)
 	    {
-		 Image image = null;
+		BufferedImage image = null;
 		 try {
 			 image = ImageIO.read(this.getClass().getResource(imagePathOrUrl));
 			} catch (IOException e) {System.out.println(e.getMessage());}
 		 return image;
 	    }
 
-
+	public static void drawCenteredString(Graphics g, String text, Rectangle rect, Font font) {
+	    // Get the FontMetrics
+	    FontMetrics metrics = g.getFontMetrics(font);
+	    // Determine the X coordinate for the text
+	    int x = rect.x + (rect.width - metrics.stringWidth(text)) / 2;
+	    // Determine the Y coordinate for the text (note we add the ascent, as in java 2d 0 is top of the screen)
+	    int y = rect.y + ((rect.height - metrics.getHeight()) / 2) + metrics.getAscent();
+	    // Set the font
+	    g.setFont(font);
+	    // Draw the String
+	    //g.drawString(text, x, y);
+	    drawStringWithBorder(g, text, x,y, font, Color.white);
+	}
+	
+	public static void drawStringWithShadow(Graphics g, String text, int x, int y, Font font, Color textColor) {
+		Color preColor = g.getColor();
+		g.setColor(Color.black);
+		g.drawString(text, x-1, y+1);
+		g.setColor(textColor);
+		g.drawString(text, x, y);
+		g.setColor(preColor);
+	}
+	
+	public static void drawStringWithBorder(Graphics g, String text, int x, int y, Font font, Color textColor) {
+		Color preColor = g.getColor();
+		g.setColor(Color.black);
+		for(int deltaX = -1; deltaX < 2; deltaX++) {
+			for(int deltaY = -1; deltaY < 2; deltaY++) {
+				g.drawString(text, x-deltaX, y+deltaY);		
+			}	
+		}
+		
+		g.setColor(textColor);
+		g.drawString(text, x, y);
+		g.setColor(preColor);
+	}
+	
+	
 }

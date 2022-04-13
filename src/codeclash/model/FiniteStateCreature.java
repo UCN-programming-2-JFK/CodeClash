@@ -2,6 +2,7 @@ package codeclash.model;
 
 import java.awt.*;
 import java.awt.geom.Dimension2D;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -10,21 +11,42 @@ import codeclash.ui.FiniteStateMachinePanel;
 //sprite class which has different behaviors (movement and visual representation) based on its state: searching for food, eating or dead.
 public class FiniteStateCreature  extends Creature {
 	
-	//Private variables ///////////
 	Random rnd = new Random();
-	//private float speed = .1f;
 	//monster image from https://omagerio.itch.io/1200-tiny-monsters-sprites-16x16
 	public enum CreatureState {FORAGING, EATING, FIGHTING, TARGET_FOCUSED, DEAD}
-	//Fearful creatures always flee, normal creatures fight if attacked until they are at 25% life, Aggressive creatures fight until death
-	//public enum CreaturePersonality {FEARFUL, NORMAL, AGGRESSIVE}
 	private CreatureState currentState = CreatureState.FORAGING;
+	private BufferedImage chewImage, deadImage, fightingImage, focusedImage;
 	//private CreaturePersonality  personality;
 	private Dimension2D terrainBorder;
 	private ArrayList<Food> foodPlacements;
 	private Food currentFood;
 	private Point currentFoodTarget;
+	private String name;
+	private Color color;
+	public Color getColor() {
+		return color;
+	}
 
-	private Image regularImage, chewImage, deadImage, fightingImage, focusedImage;
+	public void setColor(Color color) {
+		this.color = color;
+		generateNewImages();
+	}
+
+	private void generateNewImages() {
+		this.setImage(dye((BufferedImage)super.getImage(), getColor()));
+		this.chewImage = dye(this.chewImage, getColor());
+		this.deadImage= dye(this.deadImage, getColor());
+		
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
 
 	//setters and getters /////////////////////////////////////
 	public CreatureState getCurrentState() {
@@ -39,28 +61,23 @@ public class FiniteStateCreature  extends Creature {
 	public Image getImage() {
 		switch (getCurrentState()) {
 		
-		case FORAGING: return regularImage;
+		case FORAGING: return super.getImage();
 		
 		case DEAD : return deadImage;
 		
 		case EATING: 
-			//This creates a chewing animation by
+			//This creates a chewing animation 	by
 			//returning either the normal image or the eating image (open mouth)
 			//based on which quarter it is of the current time's second
 			long millisecondPartOfCurrentTime = System.currentTimeMillis() % 1000;
 			int quarterOfSecond = (int)millisecondPartOfCurrentTime / 250; 
 			boolean isQuarterEvenNumber = quarterOfSecond % 2 == 0;
 			if(isQuarterEvenNumber) return chewImage;
-			else return regularImage;
+			else  return super.getImage();
 		
-		default: return null;
+		default: return super.getImage();
 		}
 	}
-
-	public void setImage(Image image) {
-		this.regularImage = image;
-	}
-
 	
 	public Dimension2D getTerrainBorder() {
 		return terrainBorder;
@@ -73,9 +90,9 @@ public class FiniteStateCreature  extends Creature {
 
 	
 	// Constructor ////////////////////////////
-	public FiniteStateCreature(Point.Float position, Point.Float movement, Image image, Image chewImage, Image deadImage, ArrayList<Food> foodPlacements, CreatureState currentState, Dimension2D terrainBorder) {
-		super(position, movement, deadImage, 100);
-		this.regularImage = image;
+	public FiniteStateCreature(Point.Float position, Point.Float movement, BufferedImage image, BufferedImage chewImage, BufferedImage deadImage, ArrayList<Food> foodPlacements, CreatureState currentState, Dimension2D terrainBorder) {
+		super(position, movement, image, 100);
+		this.setCurrentState(CreatureState.FORAGING);
 		this.chewImage = chewImage;
 		this.deadImage = deadImage;
 		this.setCurrentState(currentState);
@@ -101,6 +118,9 @@ public class FiniteStateCreature  extends Creature {
 				this.setCurrentFoodInBelly((float) (getCurrentFoodInBelly()-amountOfFoodToMove));
 				this.setCurrentLife((float) (getCurrentLife() + amountOfFoodToMove));
 			}
+		}
+		if(getCurrentLife()<= 0) {
+			setCurrentState(CreatureState.DEAD);
 		}
 		switch (getCurrentState()) {
 		case FORAGING:
@@ -188,10 +208,24 @@ public class FiniteStateCreature  extends Creature {
 //	// Draw and related methods  //////////////////////
 	public void draw(Graphics g){				
 		g.drawImage(getImage(), (int)getPosition().x - getWidth()/2, (int)getPosition().y- getHeight()/2, null);
-		g.setColor(Color.white);
+		g.setColor(Color.black);
+		Rectangle nameRectangle = new Rectangle((int)getPosition().x - 45, (int)getPosition().y-40, 90, 20);
+		Rectangle stateRectangle =	new Rectangle((int)getPosition().x - 45, (int)getPosition().y+40, 90, 20);
+		String nameString = "\"" + getName().toUpperCase()  + "\"";
+		g.setFont(FiniteStateMachinePanel.BIGFONT);
+
+		FiniteStateMachinePanel.drawCenteredString(g, nameString, nameRectangle, FiniteStateMachinePanel.BIGFONT);
 		g.setFont(FiniteStateMachinePanel.FONT);
-		g.drawString(getCurrentState().toString(), (int)getPosition().x - 45, (int)getPosition().y-20);
-		drawLifebar(g);
+		FiniteStateMachinePanel.drawCenteredString(g, getCurrentState().toString(), stateRectangle, FiniteStateMachinePanel.FONT);		drawLifebar(g);
+		nameRectangle.translate(1, -1);
+		stateRectangle.translate(1, -1);
+		g.setColor(Color.white);
+		g.setFont(FiniteStateMachinePanel.BIGFONT);
+
+		FiniteStateMachinePanel.drawCenteredString(g, nameString, nameRectangle, FiniteStateMachinePanel.BIGFONT);
+		g.setFont(FiniteStateMachinePanel.FONT);
+
+		FiniteStateMachinePanel.drawCenteredString(g, getCurrentState().toString(), stateRectangle, FiniteStateMachinePanel.FONT);		drawLifebar(g);
 		drawFoodbar(g);
 	}
 //	
@@ -209,6 +243,7 @@ public class FiniteStateCreature  extends Creature {
 			
 			g.setColor(Color.black);
 			g.drawRect(left, top, width, height);
+			g.drawRect(left-1, top-1, width+2, height+2);
 		}
 
 	private void drawFoodbar(Graphics g) {
@@ -225,6 +260,7 @@ public class FiniteStateCreature  extends Creature {
 		
 		g.setColor(Color.black);
 		g.drawRect(left, top, width, height);
+		g.drawRect(left-1, top-1, width+2, height+2);
 	}
 
 	
@@ -236,4 +272,32 @@ public class FiniteStateCreature  extends Creature {
 		else if(percentage > .3f) {return Color.orange;}
 		else {return Color.red;}
 	}
+	 private static BufferedImage dye(BufferedImage image, Color color)
+	    {
+		 // get width and height
+	        int width = image.getWidth();
+	        int height = image.getHeight();
+	  
+	        // convert to red image
+	        for (int y = 0; y < height; y++) {
+	            for (int x = 0; x < width; x++) {
+	                int p = image.getRGB(x, y);
+	                if(p != 0) {
+	                	int a = (p >> 24) & 0xff;
+	                	int r = (p >> 16) & color.getRed();
+	                	int g = (p >> 8) & color.getGreen();
+	                	int b =  p & color.getBlue();
+	                	
+	                	// set new RGB keeping the r
+	                	// value same as in original image
+	                	// and setting g and b as 0.
+	                	p = (a << 24) | (r << 16) | (g << 8) | b;
+	                	
+	                	image.setRGB(x, y, p);
+	                }
+	                }
+	        }
+	        return image;
+	    }
+	
 }
