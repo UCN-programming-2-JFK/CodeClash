@@ -20,12 +20,16 @@ public class FiniteStateMachinePanel extends JPanel {
 	public static final Font FONT = new Font("Courier New", Font.BOLD, 16);				//font for writing
 	public static final Font BIGFONT = new Font("Courier New", Font.BOLD, 24);				//font for writing
 	public static final Font TITLEFONT = new Font("Courier New", Font.BOLD, 64);				//font for writing
-	FiniteStateCreature creature;
+	//FiniteStateCreature creature;
+	java.util.List<FiniteStateCreature> creatures = new ArrayList<FiniteStateCreature>();  
 	long lastUpdate;							//the last time an update was performed. Used to calculate time since last update, to smooth animations
 	ArrayList<Food> food = new ArrayList<>();		//the list to hold all positions of food
 	BufferedImage creatureImage, creatureChewImage, creatureDeadImage, grass;
 	Random rnd = new Random();
 	int numberOfFood = 25;
+	int numberOfCreatures = 4;
+	String[] names = new String[] {"Hannah", "Bob", "Anders", "Elsa"};
+	Color[] colors = new Color[] {Color.red, Color.cyan, new Color(70, 180, 20), new Color(70,200,200), new Color(190, 130, 230)};
 	
 	public static void main(String[] args) {
 		
@@ -37,7 +41,7 @@ public class FiniteStateMachinePanel extends JPanel {
 		frame.getContentPane().add(examplePanel); 					// add our  panel
 		examplePanel.setPreferredSize( new Dimension(windowWidth, windowHeight));
 		frame.pack();
-		examplePanel.createCreature();
+		examplePanel.createCreatures();
 		frame.setVisible(true); 									// show the window>>
 		examplePanel.runGameLoop();
 	}
@@ -46,13 +50,19 @@ public class FiniteStateMachinePanel extends JPanel {
 		
 	}
 
-	private void createCreature() {
+	private void createCreatures() {
 		creatureImage = loadImage("/graphics/finitestatecreature/finitestatecreature.png");
 		creatureChewImage = loadImage("/graphics/finitestatecreature/finitestatecreature_chewimage.png");
 		creatureDeadImage = loadImage("/graphics/finitestatecreature/finitestatecreature_deadimage.png");
-		creature = new FiniteStateCreature(new Point.Float(windowWidth/2, windowHeight/2), new Point.Float(), creatureImage, creatureChewImage, creatureDeadImage, food, FiniteStateCreature.CreatureState.FORAGING, new Dimension(windowWidth, windowHeight));
+	 
+		for(int creatureCounter = 0; creatureCounter< names.length; creatureCounter++) {
+			FiniteStateCreature creature = new FiniteStateCreature(new Point.Float(windowWidth/2-100*(creatureCounter - 2), windowHeight/2), new Point.Float(), creatureImage, creatureChewImage, creatureDeadImage, food, FiniteStateCreature.CreatureState.FORAGING, new Dimension(windowWidth, windowHeight));
+			creature.setName(names[creatureCounter]);
+			creature.setColor(colors[creatureCounter]);
+			creatures.add(creature);	
+		}
+		
 		grass = loadImage("/graphics/grass2.png");
-		creature.setName("George");
 	}
 
 	private void addFoodAtRandomPositions() {
@@ -64,7 +74,9 @@ public class FiniteStateMachinePanel extends JPanel {
 	public void paint(Graphics g) {
 		drawBackground(g);
 		drawFood(g);
-		creature.draw(g);
+		for(FiniteStateCreature creature: creatures) {
+			creature.draw(g);
+		}
 	}
 
 	private void drawFood(Graphics g) {
@@ -114,7 +126,10 @@ public class FiniteStateMachinePanel extends JPanel {
 	}
 	
 	private void update(long timePassedSinceLastUpdate) {
+		for(FiniteStateCreature creature: creatures) {
 			creature.update(timePassedSinceLastUpdate);
+		}
+
 	}
 
 	private void waitAShortInterval() {

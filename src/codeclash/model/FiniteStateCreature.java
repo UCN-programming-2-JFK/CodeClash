@@ -3,6 +3,8 @@ package codeclash.model;
 import java.awt.*;
 import java.awt.geom.Dimension2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.ColorModel;
+import java.awt.image.WritableRaster;
 import java.util.ArrayList;
 import java.util.Random;
 
@@ -33,9 +35,9 @@ public class FiniteStateCreature  extends Creature {
 	}
 
 	private void generateNewImages() {
-		this.setImage(dye((BufferedImage)super.getImage(), getColor()));
-		this.chewImage = dye(this.chewImage, getColor());
-		this.deadImage= dye(this.deadImage, getColor());
+		this.setImage(createDyedCopy((BufferedImage)super.getImage(), getColor()));
+		this.chewImage = createDyedCopy(this.chewImage, getColor());
+		this.deadImage= createDyedCopy(this.deadImage, getColor());
 		
 	}
 
@@ -101,6 +103,7 @@ public class FiniteStateCreature  extends Creature {
 		this.setSpeed(.1f);
 		this.setMaxLife(100);
 		this.setCurrentLife(getMaxLife());
+		findNewRandomDirection();
 	}
 
 	// Update and related methods //////////////////////////////
@@ -272,8 +275,9 @@ public class FiniteStateCreature  extends Creature {
 		else if(percentage > .3f) {return Color.orange;}
 		else {return Color.red;}
 	}
-	 private static BufferedImage dye(BufferedImage image, Color color)
+	 private static BufferedImage createDyedCopy(BufferedImage image, Color color)
 	    {
+		 image = deepCopy(image);
 		 // get width and height
 	        int width = image.getWidth();
 	        int height = image.getHeight();
@@ -299,5 +303,11 @@ public class FiniteStateCreature  extends Creature {
 	        }
 	        return image;
 	    }
-	
+	 private static BufferedImage deepCopy(BufferedImage bi) {
+		 ColorModel cm = bi.getColorModel();
+		 boolean isAlphaPremultiplied = cm.isAlphaPremultiplied();
+		 WritableRaster raster = bi.copyData(null);
+		 return new BufferedImage(cm, raster, isAlphaPremultiplied, null);
+		}
+	 
 }
